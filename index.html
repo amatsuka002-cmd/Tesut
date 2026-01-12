@@ -3,89 +3,126 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>HALUDAKE Mobile v5</title>
+<title>HALUDAKE Mobile v7</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-:root { --primary: #409eff; --danger: #f56c6c; --bg: #ffffff; --text: #2c3e50; --border: #dcdfe6; }
-body { margin: 0; font-family: sans-serif; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: #f4f7f9; }
+:root {
+  --primary: #409eff; --danger: #f56c6c; --bg-app: #f4f7f9;
+  --bg-card: #ffffff; --text: #2c3e50; --border: #dcdfe6;
+}
+[data-theme="dark"] {
+  --bg-app: #1a1a1a; --bg-card: #2d2d2d; --text: #e0e0e0; --border: #444444;
+}
 
-/* メイン表示エリア */
+body { margin: 0; font-family: sans-serif; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-app); color: var(--text); }
+
+/* ヘッダー・ナビ */
+#header { height: 50px; background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 1px solid var(--border); z-index: 1000; }
 #main-view { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-.tab-content { display: none; height: 100%; overflow-y: auto; background: var(--bg); -webkit-overflow-scrolling: touch; }
+.tab-content { display: none; height: 100%; overflow-y: auto; background: var(--bg-app); -webkit-overflow-scrolling: touch; }
 .tab-content.active { display: block; }
 
 /* 本文エリア */
-#right { padding: 20px 15px 180px; line-height: 1.8; font-size: 17px; white-space: pre-wrap; word-break: break-all; min-height: 100%; color: var(--text); }
-.load-guide { border: 3px dashed var(--border); margin: 20px; padding: 40px 20px; text-align: center; border-radius: 15px; color: #909399; cursor: pointer; }
-.selected-range { background-color: rgba(64, 158, 255, 0.3); border-bottom: 2px solid var(--primary); }
+#right { padding: 20px 15px 220px; line-height: 1.8; font-size: 17px; white-space: pre-wrap; word-break: break-all; min-height: 100%; color: var(--text); background: var(--bg-card); outline: none; }
+.selected-range { background-color: rgba(64, 158, 255, 0.25); border-bottom: 2px solid var(--primary); }
 
-/* 下部ナビゲーション */
+/* 置換パネル */
+#replacePanel { display: none; background: var(--bg-card); padding: 10px; border-bottom: 2px solid var(--primary); flex-direction: column; gap: 8px; }
+#replacePanel input { padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-app); color: var(--text); font-size: 16px; }
+
+/* 管理画面 */
+.chapter { border: 1px solid var(--border); margin: 10px; border-radius: 8px; background: var(--bg-card); overflow: hidden; }
+.chapter-title { padding: 12px 15px; background: rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+.chapter-anchors.collapsed { display: none; }
+.anchor { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border); background: var(--bg-card); font-size: 14px; }
+.anchor-txt { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 10px; }
+
+/* 操作UI */
 #nav { height: 70px; background: #333; display: flex; justify-content: space-around; align-items: center; z-index: 2000; padding-bottom: env(safe-area-inset-bottom); }
-.nav-item { color: #ccc; font-size: 11px; text-align: center; border: none; background: none; flex: 1; display: flex; flex-direction: column; align-items: center; }
+.nav-item { color: #ccc; font-size: 11px; text-align: center; border: none; background: none; flex: 1; }
 .nav-item.active { color: var(--primary); font-weight: bold; }
-.nav-icon { font-size: 22px; margin-bottom: 2px; }
 
-/* 【修正】アンカー作成ボタン：画面下部に大きく固定 */
-#float-btn {
-  display: none; position: fixed; 
-  bottom: 85px; left: 15px; right: 15px; /* ナビバーのすぐ上 */
-  z-index: 4000; background: var(--primary);
-  color: white; padding: 18px; border-radius: 12px; font-weight: bold;
-  box-shadow: 0 -4px 15px rgba(0,0,0,0.2); border: none; font-size: 18px;
-  user-select: none; -webkit-user-select: none;
-}
+/* 浮動アンカー作成ボタン */
+#float-btn { display: none; position: fixed; bottom: 85px; left: 15px; right: 15px; z-index: 4000; background: var(--primary); color: white; padding: 18px; border-radius: 12px; font-weight: bold; border: none; font-size: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
 
-/* 章・アンカー管理 */
-.chapter { border: 1px solid var(--border); margin: 10px; border-radius: 8px; background: #fff; overflow: hidden; }
-.chapter-title { padding: 12px 15px; background: #f9f9f9; display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: 1px solid var(--border); }
-.anchor { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; background: #fff; }
-.anchor-txt { flex: 1; font-size: 14px; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; }
-.del-btn { color: var(--danger); font-size: 20px; padding: 5px 10px; border: none; background: none; font-weight: bold; }
+/* 共通パーツ */
+.menu-btn { width: calc(100% - 20px); margin: 8px 10px; padding: 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font-weight: bold; font-size: 15px; }
+.del-btn { color: var(--danger); font-size: 22px; padding: 0 10px; background: none; border: none; font-weight: bold; }
 
-/* 操作ボタン */
-.menu-btn { width: calc(100% - 30px); margin: 10px 15px; padding: 15px; border-radius: 10px; border: 1px solid var(--border); font-size: 16px; background: white; font-weight: bold; }
-#saveFileBtn { background: #67c23a; color: white; border: none; }
-#chapterSelect { width: calc(100% - 30px); margin: 5px 15px 15px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 16px; background: #fff; }
+/* トースト通知 */
+#toast-container { position: fixed; bottom: 160px; left: 50%; transform: translateX(-50%); z-index: 9999; pointer-events: none; }
+.toast { background: rgba(44, 62, 80, 0.9); color: white; padding: 12px 24px; border-radius: 50px; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-top: 8px; opacity: 0; transform: translateY(20px); transition: 0.3s; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error { background: var(--danger); }
 </style>
 </head>
 <body>
 
+<div id="header">
+  <div id="themeToggle" style="font-size: 24px;">🌙</div>
+  <div style="font-weight: bold;">HALUDAKE Mobile v7</div>
+  <div id="editControls">
+    <button id="editBtn" onclick="toggleEdit(true)" style="border:none; background:none; font-size:24px;">✎</button>
+    <button id="finishBtn" onclick="toggleEdit(false)" style="display:none; border:none; background:none; font-size:24px; color:var(--primary);">✓</button>
+  </div>
+</div>
+
+<div id="replacePanel">
+  <input type="text" id="findText" placeholder="検索文字">
+  <input type="text" id="replaceWith" placeholder="置換文字">
+  <button onclick="executeReplace()" style="background:var(--primary); color:white; border:none; padding:12px; border-radius:8px; font-weight:bold;">一括置換を実行</button>
+</div>
+
 <div id="main-view">
   <div id="right-container" class="tab-content active">
-    <div id="right">
-      <div class="load-guide" onclick="document.getElementById('fileInput').click()">
-        <span style="font-size: 40px;">📁</span><br>タップしてファイルを読み込む
-      </div>
-    </div>
+    <div id="right" contenteditable="false">タップしてファイルを読み込むか、章を追加して執筆を開始してください。</div>
   </div>
-
   <div id="left" class="tab-content">
-    <div style="padding-top: 15px;">
-      <button class="menu-btn" onclick="addChapterMobile()">＋ 新しい章を追加</button>
-      <button id="saveFileBtn" class="menu-btn" onclick="saveData()">💾 名前を付けて保存</button>
-      <div style="padding: 5px 15px;"><label style="font-size:12px; color:#666;">アンカーの追加先：</label></div>
-      <select id="chapterSelect"></select>
-    </div>
+    <button class="menu-btn" onclick="document.getElementById('fileInput').click()">📁 ファイルを読み込む (PDF/TXT/HTML)</button>
+    <button class="menu-btn" onclick="addChapterMobile()">＋ 新しい章を追加</button>
+    <button class="menu-btn" style="background:#67c23a; color:white; border:none;" onclick="saveData()">💾 名前を付けて保存</button>
+    <div style="padding: 10px 15px 5px; font-size: 12px; color: #909399;">アンカー追加先：</div>
+    <select id="chapterSelect" class="menu-btn"></select>
     <div id="chapters"></div>
   </div>
 </div>
 
-<input type="file" id="fileInput" style="display:none;" accept=".html,.txt">
+<div id="toast-container"></div>
+<input type="file" id="fileInput" style="display:none;" accept=".html,.txt,.pdf">
 <button id="float-btn">🔖 選択範囲をアンカーにする</button>
 
 <nav id="nav">
-  <button class="nav-item active" onclick="switchTab('right-container', this)">
-    <span class="nav-icon">📖</span>本文
-  </button>
-  <button class="nav-item" onclick="switchTab('left', this)">
-    <span class="nav-icon">🔖</span>管理
-  </button>
+  <button class="nav-item active" onclick="switchTab('right-container', this)">📖 本文</button>
+  <button class="nav-item" onclick="switchTab('left', this)">🔖 管理</button>
 </nav>
 
 <script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
 const right = document.getElementById('right');
 const chapterSelect = document.getElementById('chapterSelect');
 const floatBtn = document.getElementById('float-btn');
+const themeToggle = document.getElementById('themeToggle');
 
+// トースト通知機能
+function showToast(msg, isError = false) {
+  const container = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast' + (isError ? ' error' : '');
+  t.innerText = msg;
+  container.appendChild(t);
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2500);
+}
+
+// テーマ
+themeToggle.onclick = () => {
+  const isDark = document.body.getAttribute('data-theme') === 'dark';
+  document.body.setAttribute('data-theme', isDark ? '' : 'dark');
+  themeToggle.innerText = isDark ? '🌙' : '☀️';
+};
+
+// タブ
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -94,42 +131,66 @@ function switchTab(id, btn) {
   floatBtn.style.display = 'none';
 }
 
-// 選択中の表示制御
+// 自由編集
+function toggleEdit(isStart) {
+  right.contentEditable = isStart ? "true" : "false";
+  document.getElementById('editBtn').style.display = isStart ? "none" : "block";
+  document.getElementById('finishBtn').style.display = isStart ? "block" : "none";
+  document.getElementById('replacePanel').style.display = isStart ? "flex" : "none";
+  if (!isStart) {
+    const broken = syncAnchorText();
+    if (broken.length > 0 && confirm(`${broken.length}個のアンカーが破損しました。削除しますか？`)) {
+      broken.forEach(anc => anc.remove());
+    }
+    showToast("✅ 編集を反映しました");
+  }
+}
+
+function syncAnchorText() {
+  const broken = [];
+  document.querySelectorAll('.anchor').forEach(anc => {
+    const target = right.querySelector(`span[data-block-id="${anc.dataset.bid}"]`);
+    if (target) {
+      const text = target.innerText.trim() || "(空)";
+      anc.querySelector('.anchor-txt').innerText = text.slice(0, 15) + (text.length > 15 ? "..." : "");
+    } else { broken.push(anc); }
+  });
+  return broken;
+}
+
+function executeReplace() {
+  const find = document.getElementById('findText').value;
+  const replace = document.getElementById('replaceWith').value;
+  if (!find) return;
+  if (confirm(`「${find}」を「${replace}」に置換しますか？`)) {
+    const regex = new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    right.innerHTML = right.innerHTML.replace(regex, replace);
+    syncAnchorText();
+    showToast("🔍 置換を実行しました");
+  }
+}
+
+// アンカー作成（重複チェック付き）
 document.addEventListener('selectionchange', () => {
   const sel = window.getSelection();
-  // 本文タブが表示されている時だけボタンを出す
   const isActive = document.getElementById('right-container').classList.contains('active');
-  
-  if (isActive && !sel.isCollapsed && sel.toString().trim().length > 0) {
+  if (isActive && !sel.isCollapsed && right.contentEditable === "false") {
     floatBtn.style.display = 'block';
   } else {
-    // すぐに消すとタップできないので、少しだけ猶予を持たせる
-    setTimeout(() => {
-      if (window.getSelection().isCollapsed) floatBtn.style.display = 'none';
-    }, 800);
+    setTimeout(() => { if (window.getSelection().isCollapsed) floatBtn.style.display = 'none'; }, 800);
   }
 });
 
-// アンカー作成（指が触れた瞬間に現在の選択を確定させる）
 floatBtn.onpointerdown = (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-
+  e.preventDefault(); e.stopPropagation();
   const sel = window.getSelection();
-  if (sel.isCollapsed || sel.toString().trim().length === 0) {
-    alert("文字を選択してから押してください");
-    return;
-  }
+  if (sel.isCollapsed || !chapterSelect.options.length) return;
   
-  if (chapterSelect.options.length === 0) {
-    alert("「管理」タブで章を作成してください");
-    return;
-  }
-
   const range = sel.getRangeAt(0);
-  // 本文以外を選んでいないかチェック
-  if (!right.contains(range.commonAncestorContainer)) {
-    alert("本文エリアの文字を選択してください");
+  // 【新機能】重複チェック
+  const frag = range.cloneContents();
+  if (frag.querySelector('.selected-range')) {
+    showToast("⚠️ すでにアンカーが含まれています", true);
     return;
   }
 
@@ -137,43 +198,57 @@ floatBtn.onpointerdown = (e) => {
   const span = document.createElement('span');
   span.className = 'selected-range';
   span.dataset.blockId = bid;
-
   try {
     range.surroundContents(span);
     createAnchorElement(bid, span.innerText, chapterSelect.value);
-    
-    floatBtn.style.display = 'none';
+    showToast("🔗 アンカーを作成しました");
     sel.removeAllRanges();
-  } catch (err) {
-    alert("改行をまたぐ範囲などは選択できません。");
-  }
+  } catch (err) { alert("改行を跨ぐなどの複雑な範囲は選択できません。"); }
 };
 
+// 章の管理
 function createChapter(name, existingId = null) {
   const id = existingId || 'c' + Date.now();
   const chap = document.createElement('div');
   chap.className = 'chapter';
-  chap.innerHTML = `<div class="chapter-title"><span class="title-txt">${name}</span><button class="del-btn">×</button></div><div class="chapter-anchors" id="${id}"></div>`;
+  chap.innerHTML = `
+    <div class="chapter-title" onclick="toggleChapter('${id}', this)">
+      <div><span class="toggle-icon">▼</span><span>${name}</span></div>
+      <button class="del-btn" onclick="event.stopPropagation(); deleteChapter('${id}')">×</button>
+    </div>
+    <div class="chapter-anchors" id="${id}"></div>`;
   document.getElementById('chapters').appendChild(chap);
   const opt = document.createElement('option');
-  opt.value = id; opt.innerText = name; chapterSelect.appendChild(opt);
-  chap.querySelector('.del-btn').onclick = () => {
-    if (confirm("章とアンカーを削除しますか？")) {
-      chap.querySelectorAll('.anchor').forEach(anc => deleteAnchorLogic(anc.dataset.bid));
-      chap.remove(); opt.remove();
-    }
-  };
+  opt.value = id; opt.innerText = name;
+  chapterSelect.appendChild(opt);
+  chapterSelect.value = id;
   return id;
+}
+
+function toggleChapter(id, el) {
+  const anchors = document.getElementById(id);
+  const icon = el.querySelector('.toggle-icon');
+  const isCollapsed = anchors.classList.toggle('collapsed');
+  icon.innerText = isCollapsed ? '▶' : '▼';
 }
 
 function addChapterMobile() {
   const name = prompt("章の名前:", "新しい章");
-  if (name) createChapter(name);
+  if (name) { createChapter(name); showToast("📁 章を追加しました"); }
+}
+
+function deleteChapter(id) {
+  if (confirm("章とアンカーを削除しますか？")) {
+    const container = document.getElementById(id);
+    container.querySelectorAll('.anchor').forEach(anc => deleteAnchorLogic(anc.dataset.bid));
+    container.parentElement.remove();
+    Array.from(chapterSelect.options).find(o => o.value === id).remove();
+    showToast("🗑️ 章を削除しました");
+  }
 }
 
 function createAnchorElement(bid, text, targetId) {
   const container = document.getElementById(targetId);
-  if (!container) return;
   const anc = document.createElement('div');
   anc.className = 'anchor';
   anc.dataset.bid = bid;
@@ -182,54 +257,94 @@ function createAnchorElement(bid, text, targetId) {
   anc.onclick = (e) => {
     if (e.target.classList.contains('del-btn')) {
       deleteAnchorLogic(bid); anc.remove();
+      showToast("🗑️ アンカーを削除しました");
     } else {
       switchTab('right-container', document.querySelector('.nav-item'));
       setTimeout(() => {
         const target = right.querySelector(`span[data-block-id="${bid}"]`);
         if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 200);
+      }, 300);
     }
   };
 }
 
 function deleteAnchorLogic(bid) {
-  const targetSpan = right.querySelector(`span[data-block-id="${bid}"]`);
-  if (targetSpan) {
-    const parent = targetSpan.parentNode;
-    while (targetSpan.firstChild) parent.insertBefore(targetSpan.firstChild, targetSpan);
-    parent.removeChild(targetSpan);
+  const target = right.querySelector(`span[data-block-id="${bid}"]`);
+  if (target) {
+    const p = target.parentNode;
+    while (target.firstChild) p.insertBefore(target.firstChild, target);
+    p.removeChild(target);
   }
 }
 
-document.getElementById('fileInput').onchange = e => {
+// ファイル読み込み (PDF HAMU Rule)
+document.getElementById('fileInput').onchange = async e => {
   const file = e.target.files[0];
+  if (!file) return;
+  showToast(`📄 ${file.name} を読み込み中...`);
   const reader = new FileReader();
-  reader.readAsText(file);
-  reader.onload = ev => {
-    const content = ev.target.result.normalize('NFC');
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(content, 'text/html');
-    const savedRight = doc.getElementById('right');
-    const savedChapters = doc.getElementById('chapters');
-    if (savedRight && savedChapters) {
-      right.innerHTML = savedRight.innerHTML;
-      document.getElementById('chapters').innerHTML = "";
-      chapterSelect.innerHTML = "";
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = savedChapters.innerHTML;
-      tempDiv.querySelectorAll('.chapter').forEach(oldChap => {
-        const name = oldChap.querySelector('.title-txt').innerText;
-        const newId = createChapter(name, oldChap.querySelector('.chapter-anchors').id);
-        oldChap.querySelectorAll('.anchor').forEach(oldAnc => {
-          createAnchorElement(oldAnc.dataset.bid, oldAnc.querySelector('.anchor-txt').innerText, newId);
+  if (file.type === "application/pdf") {
+    reader.readAsArrayBuffer(file);
+    reader.onload = async ev => {
+      const pdf = await pdfjsLib.getDocument({data: ev.target.result}).promise;
+      let fullText = "";
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        let lastY = -1;
+        for (let item of content.items) {
+          if (lastY !== -1 && Math.abs(item.transform[5] - lastY) > 5) fullText += "\n";
+          fullText += item.str; lastY = item.transform[5];
+        }
+        fullText += "\n";
+      }
+      right.innerText = cleanPdfText(fullText);
+      showToast("✅ PDFを読み込みました");
+    };
+  } else {
+    reader.readAsText(file);
+    reader.onload = ev => {
+      const content = ev.target.result.normalize('NFC');
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(content, 'text/html');
+      const savedRight = doc.getElementById('right');
+      if (savedRight) {
+        right.innerHTML = savedRight.innerHTML;
+        document.getElementById('chapters').innerHTML = "";
+        chapterSelect.innerHTML = "";
+        doc.getElementById('chapters').querySelectorAll('.chapter').forEach(oldChap => {
+          const name = (oldChap.querySelector('.chapter-title div span:last-child') || {innerText:"章"}).innerText;
+          const newId = createChapter(name, oldChap.querySelector('.chapter-anchors').id);
+          oldChap.querySelectorAll('.anchor').forEach(oldAnc => {
+            createAnchorElement(oldAnc.dataset.bid, oldAnc.querySelector('.anchor-txt').innerText, newId);
+          });
         });
-      });
-    } else {
-      right.innerText = content;
-      if (chapterSelect.options.length === 0) createChapter('章1');
-    }
-  };
+        showToast("✅ ファイルを復元しました");
+      } else { right.innerText = content; showToast("✅ テキストを読み込みました"); }
+    };
+  }
 };
+
+function cleanPdfText(text) {
+  text = text.normalize("NFC");
+  let tempText = text.replace(/\n\s*\n/g, "[[PARA_BREAK]]");
+  let rawLines = tempText.split('\n');
+  let result = "";
+  for (let line of rawLines) {
+    let trimmed = line.trim(); if (!trimmed) continue;
+    let last = result.split('\n').pop();
+    let isEnd = /[。！？!?…─]/.test(last.slice(-1));
+    let isIndent = /^[ 　]/.test(line);
+    let isSym = /^[^あ-んア-ン一-龠\s]/.test(trimmed) || /^[\d０-９]/.test(trimmed);
+    let isShort = last.length > 0 && last.length <= 10;
+    if (isEnd || isIndent || isSym || isShort || result === "") {
+      result += (result === "" ? "" : "\n") + trimmed;
+    } else {
+      result += trimmed.replace(/\t/g, "").replace(/([あ-んア-ン一-龠])\s+([あ-んア-ン一-龠])/g, '$1$2');
+    }
+  }
+  return result.replace(/\[\[PARA_BREAK\]\]/g, "\n\n");
+}
 
 function saveData() {
   const fileName = prompt("保存名:", "scenario");
@@ -238,6 +353,7 @@ function saveData() {
   const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), htmlContent], { type: 'text/html' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = fileName + '.html'; a.click();
+  showToast("💾 ファイルを保存しました");
 }
 
 window.onload = () => { if (!chapterSelect.options.length) createChapter('章1'); };
