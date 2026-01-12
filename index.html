@@ -3,106 +3,91 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>HALUDAKE Mobile - Complete</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<title>HALUDAKE Mobile v3</title>
 <style>
-:root { --primary: #409eff; --danger: #f56c6c; --bg: #ffffff; --text: #2c3e50; --border: #dcdfe6; --app-bg: #f4f7f9; }
-[data-theme="dark"] { --bg: #2d2d2d; --text: #e0e0e0; --border: #444444; --app-bg: #1a1a1a; }
+:root { --primary: #409eff; --danger: #f56c6c; --bg: #ffffff; --text: #2c3e50; --border: #dcdfe6; }
+body { margin: 0; font-family: sans-serif; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: #f4f7f9; }
 
-body { margin: 0; font-family: sans-serif; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: var(--app-bg); color: var(--text); }
-
-/* タブ表示切り替え */
-#main-view { flex: 1; overflow: hidden; display: flex; flex-direction: column; position: relative; }
-.tab-content { display: none; height: 100%; overflow-y: auto; background: var(--bg); }
+/* メイン表示 */
+#main-view { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.tab-content { display: none; height: 100%; overflow-y: auto; background: var(--bg); -webkit-overflow-scrolling: touch; }
 .tab-content.active { display: block; }
 
 /* 本文エリア */
-#right { padding: 30px 15px 150px; line-height: 1.8; font-size: 17px; white-space: pre-wrap; word-break: break-all; outline: none; min-height: 100%; }
+#right { padding: 20px 15px 150px; line-height: 1.8; font-size: 17px; white-space: pre-wrap; word-break: break-all; min-height: 100%; color: var(--text); }
+.load-guide { border: 3px dashed var(--border); margin: 20px; padding: 40px 20px; text-align: center; border-radius: 15px; color: #909399; }
 .selected-range { background-color: rgba(64, 158, 255, 0.2); border-bottom: 2px solid var(--primary); }
 
-/* 浮き出るアンカーボタン */
+/* 下部ナビ（iOSのセーフエリア対応） */
+#nav { height: 75px; background: #333; display: flex; justify-content: space-around; align-items: center; z-index: 2000; padding-bottom: env(safe-area-inset-bottom); }
+.nav-item { color: #ccc; font-size: 12px; text-align: center; border: none; background: none; flex: 1; }
+.nav-item.active { color: var(--primary); font-weight: bold; }
+.nav-icon { font-size: 24px; display: block; margin-bottom: 2px; }
+
+/* 浮き出るボタン：選択の下に出す */
 #float-btn {
   display: none; position: fixed; z-index: 4000; background: var(--primary);
-  color: white; padding: 12px 22px; border-radius: 30px; font-weight: bold;
+  color: white; padding: 12px 20px; border-radius: 30px; font-weight: bold;
   box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: none; font-size: 15px;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* 管理画面UI */
-.menu-section { padding: 15px; border-bottom: 1px solid var(--border); }
-.btn { width: 100%; padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid var(--border); font-size: 15px; background: var(--bg); color: var(--text); font-weight: bold; }
+/* 章・アンカーリスト */
+.chapter { border: 1px solid var(--border); margin: 10px; border-radius: 8px; background: #fff; overflow: hidden; }
+.chapter-title { padding: 12px 15px; background: #f9f9f9; display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: 1px solid var(--border); }
+.anchor { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; background: #fff; }
+.anchor-txt { flex: 1; font-size: 14px; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.del-btn { color: var(--danger); font-size: 18px; padding: 5px 10px; border: none; background: none; font-weight: bold; }
+
+/* ボタン類 */
+.menu-btn { width: calc(100% - 30px); margin: 10px 15px; padding: 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 15px; background: white; font-weight: bold; }
 #saveFileBtn { background: #67c23a; color: white; border: none; }
-.load-guide { border: 2px dashed var(--border); padding: 30px; text-align: center; border-radius: 12px; margin: 10px; color: #909399; }
-
-/* 章・アンカー表示 */
-.chapter { border: 1px solid var(--border); margin: 10px; border-radius: 8px; background: var(--bg); }
-.chapter-title { padding: 12px; background: rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-.anchor { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-top: 1px solid var(--border); font-size: 14px; }
-.anchor-txt { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.del-icon { color: var(--danger); font-size: 18px; padding: 0 10px; }
-
-/* ナビゲーション */
-#nav { height: 75px; background: #2d2d2d; display: flex; justify-content: space-around; align-items: center; z-index: 2000; padding-bottom: env(safe-area-inset-bottom); }
-.nav-item { color: #888; font-size: 11px; text-align: center; border: none; background: none; flex: 1; height: 100%; }
-.nav-item.active { color: var(--primary); font-weight: bold; }
-.nav-icon { font-size: 24px; display: block; margin-top: 5px; }
-
-/* 編集パネル */
-#edit-panel { position: fixed; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 3000; }
-.mini-btn { padding: 8px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg); font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+#chapterSelect { width: calc(100% - 30px); margin: 5px 15px 15px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 16px; }
 </style>
 </head>
 <body>
 
-<div id="edit-panel">
-    <button id="themeBtn" class="mini-btn">🌙</button>
-    <button id="editBtn" class="mini-btn">✎ 編集</button>
-    <button id="finishBtn" class="mini-btn" style="display:none; background:var(--primary); color:white;">✓ 完了</button>
-</div>
-
 <div id="main-view">
-  <div id="tab-right" class="tab-content active">
-    <div id="right" contenteditable="false">
-        <div class="load-guide" onclick="document.getElementById('fileInput').click()">
-            <span style="font-size:30px;">📁</span><br>タップして読み込み<br>(HTML/TXT/PDF)
-        </div>
+  <div id="right-container" class="tab-content active">
+    <div id="right">
+      <div class="load-guide" onclick="document.getElementById('fileInput').click()">
+        <span style="font-size: 40px;">📁</span><br>タップしてファイルを読み込む
+      </div>
     </div>
   </div>
 
-  <div id="tab-left" class="tab-content">
-    <div class="menu-section">
-      <button class="btn" onclick="addChapterMobile()">＋ 新しい章を追加</button>
-      <button id="saveFileBtn" class="btn">💾 保存</button>
-      <select id="chapterSelect" class="btn"></select>
+  <div id="left" class="tab-content">
+    <div style="padding-top: 15px;">
+      <button class="menu-btn" onclick="addChapterMobile()">＋ 新しい章を追加</button>
+      <button id="saveFileBtn" class="menu-btn" onclick="saveData()">💾 名前を付けて保存</button>
+      <div style="padding: 5px 15px;">
+        <label style="font-size:12px; color:#666;">アンカーの追加先：</label>
+      </div>
+      <select id="chapterSelect"></select>
     </div>
     <div id="chapters"></div>
   </div>
 </div>
 
-<input type="file" id="fileInput" style="display:none;" accept=".html,.txt,.pdf">
+<input type="file" id="fileInput" style="display:none;" accept=".html,.txt">
 <button id="float-btn">🔖 アンカーを作成</button>
 
 <nav id="nav">
-  <button class="nav-item active" onclick="switchTab('tab-right', this)">
+  <button class="nav-item active" onclick="switchTab('right-container', this)">
     <span class="nav-icon">📖</span>本文
   </button>
-  <button class="nav-item" onclick="switchTab('tab-left', this)">
+  <button class="nav-item" onclick="switchTab('left', this)">
     <span class="nav-icon">🔖</span>管理
   </button>
 </nav>
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
 const right = document.getElementById('right');
 const chapterSelect = document.getElementById('chapterSelect');
 const floatBtn = document.getElementById('float-btn');
-const themeBtn = document.getElementById('themeBtn');
-const editBtn = document.getElementById('editBtn');
-const finishBtn = document.getElementById('finishBtn');
+let lastRange = null;
 
-// --- 基本ロジック ---
-
+// タブ切り替え
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -111,202 +96,158 @@ function switchTab(id, btn) {
   floatBtn.style.display = 'none';
 }
 
-themeBtn.onclick = () => {
-  const isDark = document.body.getAttribute('data-theme') === 'dark';
-  document.body.setAttribute('data-theme', isDark ? '' : 'dark');
-  themeBtn.innerText = isDark ? '🌙' : '☀️';
-};
-
-editBtn.onclick = () => {
-  right.contentEditable = "true"; right.focus();
-  editBtn.style.display = "none"; finishBtn.style.display = "block";
-};
-
-finishBtn.onclick = () => {
-  const broken = syncAnchorText();
-  if (broken.length > 0) {
-    if (confirm(`${broken.length} 個のアンカーが破損しました。削除しますか？`)) {
-        broken.forEach(anc => anc.remove());
-    }
-  }
-  right.querySelectorAll('.selected-range').forEach(span => { if (!span.innerText.trim()) span.remove(); });
-  right.contentEditable = "false"; editBtn.style.display = "block"; finishBtn.style.display = "none";
-};
-
-function syncAnchorText() {
-  const broken = [];
-  document.querySelectorAll('.anchor').forEach(anc => {
-    const target = right.querySelector(`span[data-block-id="${anc.dataset.bid}"]`);
-    if (target) {
-      const txt = target.innerText.trim() || "(空)";
-      anc.querySelector('.anchor-txt').innerText = txt.slice(0, 20) + (txt.length > 20 ? "..." : "");
-    } else { broken.push(anc); }
-  });
-  return broken;
-}
-
-// --- 浮き出るアンカー作成ボタン ---
-
+// 選択範囲の監視
 document.addEventListener('selectionchange', () => {
   const sel = window.getSelection();
-  if (!sel.isCollapsed && sel.toString().trim().length > 0 && document.getElementById('tab-right').classList.contains('active')) {
-    const rect = sel.getRangeAt(0).getBoundingClientRect();
-    floatBtn.style.display = 'block';
-    floatBtn.style.top = (rect.bottom + 15) + 'px';
-    floatBtn.style.left = Math.max(10, (rect.left + rect.width / 2 - 80)) + 'px';
+  if (!sel.isCollapsed && sel.toString().trim().length > 0) {
+    const range = sel.getRangeAt(0);
+    // right（本文）の中での選択かチェック
+    if (right.contains(range.commonAncestorContainer)) {
+      lastRange = range.cloneRange();
+      const rect = range.getBoundingClientRect();
+      floatBtn.style.display = 'block';
+      floatBtn.style.top = (rect.bottom + 15 + window.scrollY) + 'px';
+      floatBtn.style.left = Math.max(10, (rect.left + rect.width / 2 - 70)) + 'px';
+      return;
+    }
   }
+  // 選択が空なら、少し遅れてボタンを隠す（クリック判定のため）
+  setTimeout(() => {
+    if (window.getSelection().isCollapsed) floatBtn.style.display = 'none';
+  }, 500);
 });
 
-document.addEventListener('touchstart', (e) => {
-  if (e.target !== floatBtn) setTimeout(() => { if(window.getSelection().isCollapsed) floatBtn.style.display = 'none'; }, 200);
-});
+// アンカー作成実行（ここが一番大事な修正）
+floatBtn.addEventListener('touchstart', (e) => {
+  e.preventDefault(); // 選択解除を防ぐ
+  if (!lastRange) return;
+  if (chapterSelect.options.length === 0) { alert("先に「管理」タブで章を作ってください"); return; }
 
-floatBtn.onclick = (e) => {
-  e.preventDefault();
-  if (chapterSelect.options.length === 0) { alert("章を作成してください"); return; }
-  const sel = window.getSelection();
-  const range = sel.getRangeAt(0);
   const bid = 'b' + Date.now();
   const span = document.createElement('span');
-  span.className = 'selected-range'; span.dataset.blockId = bid;
+  span.className = 'selected-range';
+  span.dataset.blockId = bid;
+
   try {
-    range.surroundContents(span);
+    lastRange.surroundContents(span);
     createAnchorElement(bid, span.innerText, chapterSelect.value);
-    sel.removeAllRanges();
+    window.getSelection().removeAllRanges();
     floatBtn.style.display = 'none';
-  } catch (err) { alert("複雑な範囲は選択できません。"); }
-};
+    lastRange = null;
+  } catch (err) {
+    alert("複雑な範囲は選べません。一行ずつ選択してください。");
+  }
+}, {passive: false});
 
-// --- 章・アンカー管理ロジック (PC版完全移植) ---
-
+// 章の作成（PC版のロジック）
 function createChapter(name, existingId = null) {
   const id = existingId || 'c' + Date.now();
   const chap = document.createElement('div');
   chap.className = 'chapter';
-  chap.innerHTML = `<div class="chapter-title"><span class="title-txt">${name}</span><span class="del-icon">×</span></div><div class="chapter-anchors" id="${id}"></div>`;
+  chap.innerHTML = `
+    <div class="chapter-title">
+      <span class="title-txt">${name}</span>
+      <button class="del-btn">×</button>
+    </div>
+    <div class="chapter-anchors" id="${id}"></div>`;
+  
   document.getElementById('chapters').appendChild(chap);
-  
   const opt = document.createElement('option');
-  opt.value = id; opt.innerText = name; chapterSelect.appendChild(opt);
-  
-  chap.querySelector('.del-icon').onclick = (e) => {
-    e.stopPropagation();
-    if(confirm("章とアンカーをすべて削除しますか？")) {
+  opt.value = id; opt.innerText = name;
+  chapterSelect.appendChild(opt);
+
+  chap.querySelector('.del-btn').onclick = () => {
+    if (confirm("この章と、含まれるアンカーをすべて削除しますか？")) {
       chap.querySelectorAll('.anchor').forEach(anc => deleteAnchorLogic(anc.dataset.bid));
-      chap.remove(); opt.remove();
+      chap.remove();
+      opt.remove();
     }
   };
   return id;
 }
 
+function addChapterMobile() {
+  const name = prompt("章の名前:", "新しい章");
+  if (name) createChapter(name);
+}
+
+// アンカー表示（PC版のロジック）
 function createAnchorElement(bid, text, targetId) {
   const container = document.getElementById(targetId);
-  if(!container) return;
+  if (!container) return;
   const anc = document.createElement('div');
-  anc.className = 'anchor'; anc.dataset.bid = bid;
-  anc.innerHTML = `<span class="anchor-txt">${text.slice(0,20)}...</span><span class="del-icon">×</span>`;
+  anc.className = 'anchor';
+  anc.dataset.bid = bid;
+  anc.innerHTML = `<span class="anchor-txt">${text.slice(0,15)}...</span><button class="del-btn">×</button>`;
   container.appendChild(anc);
-  
+
   anc.onclick = (e) => {
-    if(e.target.classList.contains('del-icon')) {
-      deleteAnchorLogic(bid); anc.remove();
+    if (e.target.classList.contains('del-btn')) {
+      deleteAnchorLogic(bid);
+      anc.remove();
     } else {
-      switchTab('tab-right', document.querySelector('.nav-item'));
+      switchTab('right-container', document.querySelector('.nav-item'));
       setTimeout(() => {
         const target = right.querySelector(`span[data-block-id="${bid}"]`);
-        if(target) target.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 150);
+        if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 200);
     }
   };
 }
 
 function deleteAnchorLogic(bid) {
-  const target = right.querySelector(`span[data-block-id="${bid}"]`);
-  if (target) {
-    const p = target.parentNode;
-    while (target.firstChild) p.insertBefore(target.firstChild, target);
-    p.removeChild(target);
+  const targetSpan = right.querySelector(`span[data-block-id="${bid}"]`);
+  if (targetSpan) {
+    const parent = targetSpan.parentNode;
+    while (targetSpan.firstChild) parent.insertBefore(targetSpan.firstChild, targetSpan);
+    parent.removeChild(targetSpan);
   }
 }
 
-function addChapterMobile() {
-  const name = prompt("章の名前:", "新しい章");
-  if(name) createChapter(name);
+// 保存
+function saveData() {
+  const fileName = prompt("保存名:", "scenario");
+  if (!fileName) return;
+  const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+  const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), htmlContent], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = fileName + '.html'; a.click();
 }
 
-// --- PDF・ファイル処理 (PC版の整形ルールを維持) ---
-
-function cleanPdfText(text) {
-  text = text.normalize("NFC");
-  let rawLines = text.replace(/\n\s*\n/g, "[[PARA]]").split('\n');
-  let result = "";
-  for (let line of rawLines) {
-    let trimmed = line.trim();
-    if (!trimmed) continue;
-    let lastLine = result.split('\n').pop();
-    let prevEnd = /[。！？!?…─]/.test(lastLine.slice(-1));
-    let isIndent = /^[ 　]/.test(line);
-    let isSpec = /^[^あ-んア-ン一-龠\s]/.test(trimmed) || /^[\d０-９]/.test(trimmed);
-    let wasShort = lastLine.length > 0 && lastLine.length <= 10;
-    
-    if (prevEnd || isIndent || isSpec || wasShort || line.includes("[[PARA]]") || result === "") {
-      result += (result === "" ? "" : "\n") + trimmed;
-    } else {
-      result += trimmed.replace(/\t/g, "").replace(/([あ-んア-ン一-龠])\s+([あ-んア-ン一-龠])/g, '$1$2');
-    }
-  }
-  return result.replace(/\[\[PARA\]\]/g, "\n\n").trim();
-}
-
-async function extractPdfText(data) {
-  const pdf = await pdfjsLib.getDocument({data: data}).promise;
-  let full = "";
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    let lastY = -1; let pageText = "";
-    for (let item of content.items) {
-      if (lastY !== -1 && Math.abs(item.transform[5] - lastY) > 5) pageText += "\n";
-      pageText += item.str; lastY = item.transform[5];
-    }
-    full += pageText + "\n";
-  }
-  return cleanPdfText(full);
-}
-
+// ファイル読み込み
 document.getElementById('fileInput').onchange = e => {
   const file = e.target.files[0];
   const reader = new FileReader();
-  if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
-    reader.readAsArrayBuffer(file);
-    reader.onload = async ev => { right.innerText = await extractPdfText(ev.target.result); };
-  } else {
-    reader.readAsText(file);
-    reader.onload = ev => {
-      const doc = new DOMParser().parseFromString(ev.target.result, 'text/html');
-      const sRight = doc.getElementById('right');
-      const sChaps = doc.getElementById('chapters');
-      if (sRight && sChaps) {
-        right.innerHTML = sRight.innerHTML;
-        document.getElementById('chapters').innerHTML = ""; chapterSelect.innerHTML = "";
-        const temp = document.createElement('div'); temp.innerHTML = sChaps.innerHTML;
-        temp.querySelectorAll('.chapter').forEach(old => {
-          const nid = createChapter(old.querySelector('.title-txt').innerText, old.querySelector('.chapter-anchors').id);
-          old.querySelectorAll('.anchor').forEach(a => createAnchorElement(a.dataset.bid, a.querySelector('.anchor-txt').innerText, nid));
+  reader.readAsText(file);
+  reader.onload = ev => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(ev.target.result, 'text/html');
+    const savedRight = doc.getElementById('right');
+    const savedChapters = doc.getElementById('chapters');
+    
+    if (savedRight && savedChapters) {
+      right.innerHTML = savedRight.innerHTML;
+      document.getElementById('chapters').innerHTML = "";
+      chapterSelect.innerHTML = "";
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = savedChapters.innerHTML;
+      tempDiv.querySelectorAll('.chapter').forEach(oldChap => {
+        const name = oldChap.querySelector('.title-txt').innerText;
+        const oldId = oldChap.querySelector('.chapter-anchors').id;
+        const newId = createChapter(name, oldId);
+        oldChap.querySelectorAll('.anchor').forEach(oldAnc => {
+          createAnchorElement(oldAnc.dataset.bid, oldAnc.querySelector('.anchor-txt').innerText, newId);
         });
-      } else { right.innerText = ev.target.result; }
-    };
-  }
+      });
+    } else {
+        // ただのテキストファイルの場合
+        right.innerText = ev.target.result;
+        if (chapterSelect.options.length === 0) createChapter('章1');
+    }
+  };
 };
 
-document.getElementById('saveFileBtn').onclick = () => {
-  let name = prompt("保存名:", "scenario_mobile");
-  if (!name) return;
-  const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), "<!DOCTYPE html>\n" + document.documentElement.outerHTML], { type: 'text/html' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name + '.html'; a.click();
-};
-
-window.onload = () => { if (!document.getElementById('chapters').children.length) createChapter('章1'); };
+window.onload = () => { if (!chapterSelect.options.length) createChapter('章1'); };
 </script>
 </body>
 </html>
